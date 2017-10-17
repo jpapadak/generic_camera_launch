@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    
+    <arg name="live_sensor" default="true"/>
+    
+    <!-- BEGIN Live Sensor Configuration -->
+    <arg name="sensor_type_sr4000" default="false"/>
+    <arg name="sensor_type_ds325" default="false"/>
+    <arg name="sensor_type_astra" default="true"/>
+    <arg name="sensor_type_xtion" default="false"/>
+    <arg name="sensor_type_kinect_xbox360" default="false"/>
+    <arg name="sensor_type_kinect_v2" default="false"/>
+    <arg name="kinect2_resolution" default="qhd"/>
+
+    <include file="$(find generic_camera_launch)/launch/device/generic.depth.device.launch.xml"
+             if="$(arg live_sensor)">
+        <arg name="camera" value="$(arg camera)"/>
+        <arg name="data_skip" default="0"/>
+        <arg name="sensor_type_sr4000" value="$(arg sensor_type_sr4000)"/>
+        <arg name="sensor_type_ds325" value="$(arg sensor_type_ds325)"/>
+        <arg name="sensor_type_astra" value="$(arg sensor_type_astra)"/>
+        <arg name="sensor_type_xtion" value="$(arg sensor_type_xtion)"/>
+        <arg name="sensor_type_kinect_xbox360" value="$(arg sensor_type_kinect_xbox360)"/>
+        <arg name="sensor_type_kinect_v2" value="$(arg sensor_type_kinect_v2)"/>
+        <arg name="kinect2_resolution" value="$(arg kinect2_resolution)"/>
+    </include> 
+    <!-- END Live Sensor Configuration -->
+    
+</launch>

@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<launch>
+
+    <!-- start tof camera viewer -->
+    <node pkg="swissranger_camera" type="swissranger_camera" 
+          name="swissranger_camera" cwd="node" respawn="false" output="screen">
+        <param name="auto_exposure" value="1" />
+    </node>
+
+</launch>

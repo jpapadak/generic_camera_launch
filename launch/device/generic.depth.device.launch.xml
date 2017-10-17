@@ -1,0 +1,301 @@
+<?xml version="1.0"?>
+<launch>
+
+    <arg name="camera" default="camera" />
+    
+    <arg name="sensor_type_sr4000" default="false" />
+    <arg name="sensor_type_ds325" default="false" />
+    <arg name="sensor_type_astra" default="false" />
+    <arg name="sensor_type_xtion" default="false" />
+    <arg name="sensor_type_kinect_xbox360" default="false" />
+    <arg name="sensor_type_kinect_v2" default="false" />
+    
+    <arg name="load_astra_driver" default="true" if="$(arg sensor_type_astra)" />
+    <arg name="load_astra_driver" default="false" unless="$(arg sensor_type_astra)" />
+    <arg name="load_xtion_driver" default="true" if="$(arg sensor_type_xtion)" />
+    <arg name="load_xtion_driver" default="false" unless="$(arg sensor_type_xtion)" />
+    <arg name="load_ds325_driver" default="true" if="$(arg sensor_type_ds325)" />
+    <arg name="load_ds325_driver" default="false" unless="$(arg sensor_type_ds325)" />
+    <arg name="load_kinect360_driver" default="true" if="$(arg sensor_type_kinect_xbox360)" />
+    <arg name="load_kinect360_driver" default="false" unless="$(arg sensor_type_kinect_xbox360)" />
+    <arg name="load_sr4000_driver" default="true" if="$(arg sensor_type_sr4000)" />
+    <arg name="load_sr4000_driver" default="false" unless="$(arg sensor_type_sr4000)" />
+    <arg name="load_kinect_v2_driver" default="true" if="$(arg sensor_type_kinect_v2)" />
+    <arg name="load_kinect_v2_driver" default="false" unless="$(arg sensor_type_kinect_v2)" />
+
+    <!-- BEGIN Primesense XTion / Kinect XBOX 360 Sensor Shared Config -->
+    <!-- Optionally suppress loading the driver nodelet and/or publishing the default tf
+    tree. Useful if you are playing back recorded raw data from a bag, or are
+    supplying a more accurate tf tree from calibration. -->
+    <arg name="data_skip" default="0" />
+    <arg name="publish_tf" default="false" /> 
+
+    <arg name="rgb_frame_id"   default="$(arg camera)_rgb_optical_frame" />
+    <arg name="depth_frame_id" default="$(arg camera)_depth_optical_frame" />
+
+    <!-- device_id can have the following formats:
+    "#1"  : the first device found
+    "2@X" : the Xth device on USB bus 2 -->
+    <arg name="device_id" default="#1" />
+    <arg name="bootorder" default="0" />
+    <arg name="devnums" default="1" />
+    <arg name="load_driver" default="true" />
+    
+    <!-- By default, calibrations are stored to file://${ROS_HOME}/camera_info/${NAME}.yaml,
+    where ${NAME} is of the form "[rgb|depth]_[serial#]", e.g. "depth_B00367707227042B".
+    See camera_info_manager docs for calibration URL details. -->
+    <arg name="rgb_camera_info_url"   default="" />
+    <arg name="depth_camera_info_url" default="" />
+
+    <!-- Hardware depth registration -->
+    <!--  <arg name="depth_registration" default="false" /> -->
+    <arg name="depth_registration" default="true" />
+
+    <!-- Driver parameters -->
+    <arg name="color_depth_synchronization"     default="false" />
+    <arg name="auto_exposure"                   default="true" />
+    <arg name="auto_white_balance"              default="true" />
+
+    <!-- Arguments for remapping all device namespaces -->
+    <arg name="rgb"              default="rgb" />
+    <arg name="ir"               default="ir" />
+    <arg name="depth"            default="depth" />
+    <arg name="depth_registered" default="depth_registered" />
+    <arg name="projector"        default="projector" />
+
+    <!-- Disable bond topics by default -->
+    <arg name="respawn" default="false" />
+
+    <!-- Start nodelet manager -->
+    <arg name="manager" value="$(arg camera)_nodelet_manager" />
+    <arg name="debug" default="false" /> <!-- Run manager in GDB? -->
+    <!-- Worker threads for the nodelet manager -->
+    <arg name="num_worker_threads" default="4" />
+    <!-- END Primesense XTion / Kinect XBOX 360 Sensor Shared Config -->
+
+    <!-- BEGIN Primesense XTion Sensor-Specific Config -->
+    <!-- Processing Modules -->
+    <arg name="rgb_processing"                  default="false" unless="$(arg load_kinect360_driver)" />
+    <arg name="debayer_processing"              default="false" unless="$(arg load_kinect360_driver)" />
+    <arg name="rgb_processing"                  default="true" if="$(arg load_kinect360_driver)"/>
+    <arg name="debayer_processing"              default="true" if="$(arg load_kinect360_driver)"/>
+    <arg name="ir_processing"                   default="false" />
+    <arg name="depth_processing"                default="false" />
+    <arg name="depth_registered_processing"     default="false" />
+    <arg name="disparity_processing"            default="false" />
+    <arg name="disparity_registered_processing" default="false" />
+    <arg name="hw_registered_processing"        default="true" if="$(arg depth_registration)" />
+    <arg name="sw_registered_processing"        default="false" if="$(arg depth_registration)" />
+    <arg name="hw_registered_processing"        default="false" unless="$(arg depth_registration)" />
+    <arg name="sw_registered_processing"        default="true" unless="$(arg depth_registration)" />
+    <!-- END Primesense XTion Sensor-Specific Config -->
+
+    <!-- BEGIN Kinect XBOX 360 Sensor-Specific Config -->
+    <!-- enable diagnostics support for freenect_camera -->
+    <arg name="enable_rgb_diagnostics" default="false" />
+    <arg name="enable_ir_diagnostics" default="false" />
+    <arg name="enable_depth_diagnostics" default="false" />
+    <arg name="diagnostics_max_frequency" default="30.0" />
+    <arg name="diagnostics_min_frequency" default="30.0" />
+    <arg name="diagnostics_tolerance" default="0.05" />
+    <arg name="diagnostics_window_time" default="5.0" />
+    <!-- enable libfreenect debug logging -->
+    <arg name="libfreenect_debug" default="false" />
+    <!-- END Kinect XBOX 360 Sensor-Specific Config -->
+
+    <!-- Push down all topics/nodelets into "camera" namespace -->
+    <group ns="$(arg camera)">
+  
+        <param name="driver/data_skip" value="$(arg data_skip)" />
+
+        <remap from="depth_registered/image_raw" 
+               to="depth_registered/input_image" 
+               if="$(arg load_astra_driver)"/>    
+        <remap from="rgb/image_raw" 
+               to="rgb/input_image" 
+               if="$(arg load_astra_driver)"/>    
+        <include if="$(arg load_astra_driver)"
+                 file="$(find rgbd_launch)/launch/includes/manager.launch.xml">
+            <arg name="name" value="$(arg manager)" />
+            <arg name="debug" value="$(arg debug)" />
+            <arg name="num_worker_threads"  value="$(arg num_worker_threads)" />
+        </include>
+
+        <!-- Load astra driver -->
+        <include if="$(arg load_astra_driver)"
+                 file="$(find astra_launch)/launch/includes/device.launch.xml">            
+            <arg name="manager"                         value="$(arg manager)" />
+            <arg name="device_id"                       value="$(arg device_id)" />
+            <!--<arg name="bootorder"                       value="$(arg bootorder)" />
+            <arg name="devnums"                         value="$(arg devnums)" />-->
+            <arg name="rgb_frame_id"                    value="$(arg rgb_frame_id)" />
+            <arg name="depth_frame_id"                  value="$(arg depth_frame_id)" />
+            <arg name="rgb_camera_info_url"             value="$(arg rgb_camera_info_url)" />
+            <arg name="depth_camera_info_url"           value="$(arg depth_camera_info_url)" />
+            <arg name="rgb"                             value="$(arg rgb)" />
+            <arg name="ir"                              value="$(arg ir)" />
+            <arg name="depth"                           value="$(arg depth)" />
+            <arg name="respawn"                         value="$(arg respawn)" />
+            <arg name="depth_registration"              value="$(arg depth_registration)" />
+            <arg name="color_depth_synchronization"     value="$(arg color_depth_synchronization)" />
+            <arg name="auto_exposure"                   value="$(arg auto_exposure)" />
+            <arg name="auto_white_balance"              value="$(arg auto_white_balance)" />
+        </include>
+
+        <remap from="depth_registered/image_raw" 
+               to="depth_registered/input_image" 
+               if="$(arg load_xtion_driver)"/>    
+        <remap from="rgb/image_raw" 
+               to="rgb/input_image" 
+               if="$(arg load_xtion_driver)"/>    
+        <include if="$(arg load_xtion_driver)"
+                 file="$(find rgbd_launch)/launch/includes/manager.launch.xml">
+            <arg name="name" value="$(arg manager)" />
+            <arg name="debug" value="$(arg debug)" />
+            <arg name="num_worker_threads"  value="$(arg num_worker_threads)" />
+        </include>
+                        
+        <!-- Load xtion driver -->
+        <include if="$(arg load_xtion_driver)"
+                 file="$(find openni2_launch)/launch/includes/device.launch.xml">
+            <arg name="manager"                         value="$(arg manager)" />
+            <arg name="device_id"                       value="$(arg device_id)" />
+            <arg name="rgb_frame_id"                    value="$(arg rgb_frame_id)" />
+            <arg name="depth_frame_id"                  value="$(arg depth_frame_id)" />
+            <arg name="rgb_camera_info_url"             value="$(arg rgb_camera_info_url)" />
+            <arg name="depth_camera_info_url"           value="$(arg depth_camera_info_url)" />
+            <arg name="rgb"                             value="$(arg rgb)" />
+            <arg name="ir"                              value="$(arg ir)" />
+            <arg name="depth"                           value="$(arg depth)" />
+            <arg name="respawn"                         value="$(arg respawn)" />
+            <arg name="depth_registration"              value="$(arg depth_registration)" />
+            <arg name="color_depth_synchronization"     value="$(arg color_depth_synchronization)" />
+            <arg name="auto_exposure"                   value="$(arg auto_exposure)" />
+            <arg name="auto_white_balance"              value="$(arg auto_white_balance)" />
+        </include>
+        
+        <!-- Start nodelet manager -->
+        <remap from="depth_registered/image_raw" 
+               to="depth_registered/input_image" 
+               if="$(arg load_kinect360_driver)"/>    
+        <remap from="rgb/image_color" 
+               to="rgb/input_image" 
+               if="$(arg load_kinect360_driver)"/>    
+        <include if="$(arg load_kinect360_driver)"
+                 file="$(find rgbd_launch)/launch/includes/manager.launch.xml">
+            <arg name="name" value="$(arg manager)" />
+            <arg name="debug" value="$(arg debug)" />
+            <arg name="num_worker_threads"  value="$(arg num_worker_threads)" />
+        </include>
+        <include if="$(arg load_kinect360_driver)"
+                 file="$(find freenect_launch)/launch/includes/device.launch.xml">
+            <!-- Could really use some syntactic sugar for this -->
+            <arg name="manager"                   value="$(arg manager)" />
+            <arg name="device_id"                 value="$(arg device_id)" />
+            <arg name="rgb_frame_id"              value="$(arg rgb_frame_id)" />
+            <arg name="depth_frame_id"            value="$(arg depth_frame_id)" />
+            <arg name="rgb_camera_info_url"       value="$(arg rgb_camera_info_url)" />
+            <arg name="depth_camera_info_url"     value="$(arg depth_camera_info_url)" />
+            <arg name="depth_registration"        value="$(arg depth_registration)" />
+            <arg name="data_skip"                 value="$(arg data_skip)" />
+            <arg name="rgb"                       value="$(arg rgb)" />
+            <arg name="ir"                        value="$(arg ir)" />
+            <arg name="depth"                     value="$(arg depth)" />
+            <!--<arg name="depth_registered"          value="$(arg depth_registration)" /> -->
+            <!-- openni <arg name="depth_registration"        value="$(arg depth_registration)" /> -->
+            <arg name="projector"                 value="$(arg projector)" />
+            <arg name="respawn"                   value="$(arg respawn)" />
+            <arg name="libfreenect_debug"         value="$(arg libfreenect_debug)" />
+            <arg name="enable_rgb_diagnostics"    value="$(arg enable_rgb_diagnostics)" />
+            <arg name="enable_ir_diagnostics"     value="$(arg enable_ir_diagnostics)" />
+            <arg name="enable_depth_diagnostics"  value="$(arg enable_depth_diagnostics)" />
+            <arg name="diagnostics_max_frequency" value="$(arg diagnostics_max_frequency)" />
+            <arg name="diagnostics_min_frequency" value="$(arg diagnostics_min_frequency)" />
+            <arg name="diagnostics_tolerance"     value="$(arg diagnostics_tolerance)" />
+            <arg name="diagnostics_window_time"   value="$(arg diagnostics_window_time)" />                        
+        </include>
+
+        <!-- Load standard constellation of processing nodelets -->
+        <include if="$(arg load_kinect360_driver)"
+                 file="$(find rgbd_launch)/launch/includes/processing.launch.xml">
+            <arg name="manager"                         value="$(arg manager)" />
+            <arg name="rgb"                             value="$(arg rgb)" />
+            <arg name="ir"                              value="$(arg ir)" />
+            <arg name="depth"                           value="$(arg depth)" />
+            <arg name="respawn"                         value="$(arg respawn)" />
+            <arg name="rgb_processing"                  value="$(arg rgb_processing)" />
+            <arg name="debayer_processing"              value="$(arg debayer_processing)" />
+            <arg name="ir_processing"                   value="$(arg ir_processing)" />
+            <arg name="depth_processing"                value="$(arg depth_processing)" />
+            <arg name="depth_registered_processing"     value="$(arg depth_registered_processing)" />
+            <arg name="disparity_processing"            value="$(arg disparity_processing)" />
+            <arg name="disparity_registered_processing" value="$(arg disparity_registered_processing)" />
+            <arg name="hw_registered_processing"        value="$(arg hw_registered_processing)" />
+            <arg name="sw_registered_processing"        value="$(arg sw_registered_processing)" />
+        </include>
+    </group>
+    <!-- END Primesense XTion Sensor-Specific Config -->
+
+    <!-- BEGIN Softkinetic DS325 Sensor-Specific Config -->
+    <group ns="$(arg camera)">
+        <remap from="softkinetic_camera/rgb/camera_info" to="rgb/camera_info"/>
+        <remap from="softkinetic_camera/depth/image_raw" to="depth_registered/input_image"/>
+        <remap from="softkinetic_camera/rgb/image_color" to="rgb/input_image"/>
+        <include if="$(arg load_ds325_driver)"
+                 file="$(find generic_camera_launch)/launch/device.ds325.launch.xml">
+        </include>  
+        <!--- <include if="$(arg load_ds325_driver)"
+                 file="$(find softkinetic_camera)/launch/softkinetic_camera_ds325.launch">
+        </include> -->
+    </group>
+    <!-- END Softkinetic DS325 Sensor-Specific Config -->
+
+    <!-- START Mesa Imaging SR4000 Sensor-Specific Config -->
+    <group ns="$(arg camera)">
+        <remap from="swissranger_camera/intensity/image_raw" to="rgb/input_image"/>
+        <remap from="swissranger_camera/distance/image_raw" to="depth_registered/input_image"/>
+        <include if="$(arg load_sr4000_driver)"
+                 file="$(find generic_camera_launch)/launch/device.sr4000.launch.xml">
+        </include>
+    </group>
+    <!-- END Mesa Imaging SR4000 Sensor-Specific Config -->
+
+
+    <!-- BEGIN Kinect v2 Sensor-Specific Config -->
+    <arg name="kinect2_resolution" default="qhd"/>
+    <group ns="$(arg camera)">
+        <arg name="base_name"         value="kinect2"/>
+        <remap from="$(arg base_name)/$(arg kinect2_resolution)/camera_info" to="rgb/camera_info"/>
+        <remap from="$(arg base_name)/$(arg kinect2_resolution)/image_depth_rect" to="depth_registered/input_image"/>
+        <remap from="$(arg base_name)/$(arg kinect2_resolution)/image_color_rect" to="rgb/input_image"/>
+        
+        <include if="$(arg load_kinect_v2_driver)"
+                 file="$(find generic_camera_launch)/launch/device.kinect2.launch.xml">
+            <arg name="base_name"         value="$(arg base_name)"/>
+            <arg name="sensor"            value=""/>
+            <!--<arg name="publish_tf"        value="false"/>-->
+            <arg name="base_name_tf"      value="$(arg base_name)"/>
+            <arg name="fps_limit"         value="-1.0"/>
+            <arg name="calib_path"        value="$(find kinect2_bridge)/data/"/>
+            <arg name="use_png"           value="false"/>
+            <arg name="jpeg_quality"      value="90"/>
+            <arg name="png_level"         value="1"/>
+            <arg name="depth_method"      value="default"/>
+            <arg name="depth_device"      value="-1"/>
+            <arg name="reg_method"        value="default"/>
+            <arg name="reg_device"        value="-1"/>
+            <arg name="max_depth"         value="12.0"/>
+            <arg name="min_depth"         value="0.1"/>
+            <arg name="queue_size"        value="5"/>
+            <arg name="bilateral_filter"  value="true"/>
+            <arg name="edge_aware_filter" value="true"/>
+            <arg name="worker_threads"    value="4"/>
+            <arg name="nodelet_manager"   value="$(arg base_name)"/>
+            <arg name="start_manager"     value="true"/>
+            <arg name="use_machine"       value="true"/>
+            <arg name="use_nodelet"       value="true"/>
+        </include>
+    </group>
+    
+    <!-- END Kinect v2 Sensor-Specific Config -->
+</launch>
