@@ -2,18 +2,18 @@
 <launch>
     
     <arg name="camera_name" default="camera"/>
-    <arg name="run_viewer" default="true"/>
+    <arg name="run_viewer" default="false"/>
     <arg name="viewer_image_topic" default="$(arg camera_name)/rgb/input_image"/>
     
-    <!-- BEGIN Live Sensor Configuration -->
     <arg name="sensor_type_sr4000" default="false"/>
     <arg name="sensor_type_ds325" default="false"/>
-    <arg name="sensor_type_astra" default="true"/>
+    <arg name="sensor_type_astra" default="false"/>
     <arg name="sensor_type_xtion" default="false"/>
     <arg name="sensor_type_kinect_xbox360" default="false"/>
     <arg name="sensor_type_kinect_v2" default="false"/>
     <arg name="kinect2_resolution" default="qhd"/>
 
+    <!-- BEGIN Live Sensor Configuration -->
     <include file="$(find generic_camera_launch)/launch/device/generic.depth.device.launch.xml">
         <arg name="camera" value="$(arg camera_name)"/>
         <arg name="data_skip" default="0"/>
