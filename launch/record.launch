@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    
+
+    <arg name="record" default="true"/>
+    <arg name="record_path" default="$(env HOME)/bagfiles/rgbd.bag"/>  
+    <arg name="record_topics" default="camera/rgb/input_image camera/rgb/camera_info camera/depth_registered/input_image"/> 
+    
+    <!-- BEGIN Live Sensor Configuration -->
+    <include file="$(find generic_camera_launch)/launch/generic_camera.launch">
+        <arg name="camera_name" default="camera"/>
+        <arg name="run_viewer" default="true"/>
+        <arg name="viewer_image_topic" default="camera/rgb/input_image"/>
+        <arg name="sensor_type_sr4000" default="false"/>
+        <arg name="sensor_type_ds325" default="false"/>
+        <arg name="sensor_type_astra" default="true"/>
+        <arg name="sensor_type_xtion" default="false"/>
+        <arg name="sensor_type_kinect_xbox360" default="false"/>
+        <arg name="sensor_type_kinect_v2" default="false"/>
+        <arg name="kinect2_resolution" default="qhd"/>
+    </include>
+    
+    <node name="image_record" pkg="rosbag" type="record" output="screen" 
+          args="record -o $(arg record_path) $(arg record_topics)"
+          if="$(arg record)">
+    </node>
+        
+</launch>
